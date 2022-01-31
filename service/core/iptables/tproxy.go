@@ -2,9 +2,10 @@ package iptables
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/v2rayA/v2rayA/common/cmds"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"strings"
 )
 
 type tproxy struct {
@@ -149,8 +150,9 @@ ip6tables -w 2 -t mangle -A TP_MARK -p udp -m conntrack --ctstate NEW -j MARK --
 ip6tables -w 2 -t mangle -A TP_MARK -j CONNMARK --save-mark
 `
 	}
+	commands = ""
 	return Setter{
-		Cmds:      commands,
+		Cmds: commands,
 	}
 }
 
@@ -187,7 +189,8 @@ ip6tables -w 2 -t mangle -F TP_MARK
 ip6tables -w 2 -t mangle -X TP_MARK
 `
 	}
+	commands = ""
 	return Setter{
-		Cmds:      commands,
+		Cmds: commands,
 	}
 }

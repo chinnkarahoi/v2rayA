@@ -6,6 +6,16 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"net"
+	"net/url"
+	"os"
+	"regexp"
+	"sort"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 	"github.com/mohae/deepcopy"
 	"github.com/v2rayA/RoutingA"
@@ -24,15 +34,6 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/plugin"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"net"
-	"net/url"
-	"os"
-	"regexp"
-	"sort"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 )
 
 type Template struct {
@@ -1032,19 +1033,15 @@ func (t *Template) setInbound() error {
 			t.Inbounds = append(t.Inbounds[:i], t.Inbounds[i+1:]...)
 		}
 	}
-	if IsTransparentOn() {
-		switch t.Setting.TransparentType {
-		case configure.TransparentTproxy, configure.TransparentRedirect:
-			t.AppendDokodemoTProxy(string(t.Setting.TransparentType), 32345, "transparent")
-		case configure.TransparentSystemProxy:
-			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
-				Port:     32345,
-				Protocol: "http",
-				Listen:   "127.0.0.1",
-				Tag:      "transparent",
-			})
-		}
-
+	switch t.Setting.TransparentType {
+	case configure.TransparentTproxy, configure.TransparentRedirect:
+		t.AppendDokodemoTProxy(string(t.Setting.TransparentType), 32345, "transparent")
+	case configure.TransparentSystemProxy:
+		t.Inbounds = append(t.Inbounds, coreObj.Inbound{
+			Port:     32345,
+			Protocol: "http",
+			Tag:      "transparent",
+		})
 	}
 	if specialMode.ShouldLocalDnsListen() {
 		if couldListenLocalhost, _ := specialMode.CouldLocalDnsListen(); couldListenLocalhost {
@@ -1525,10 +1522,8 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 		return nil, err
 	}
 	//transparent routing
-	if IsTransparentOn() {
-		if err = t.setTransparentRouting(); err != nil {
-			return nil, err
-		}
+	if err = t.setTransparentRouting(); err != nil {
+		return nil, err
 	}
 	//set group routing
 	if err = t.setGroupRouting(serverData); err != nil {
