@@ -19,10 +19,13 @@ COPY --from=version /build/version ./
 COPY --from=builder-web /build/web server/router/web
 RUN export VERSION=$(cat ./version) && CGO_ENABLED=0 go build -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${VERSION:1} -s -w" -o v2raya .
 
-FROM v2fly/v2fly-core
+FROM karahoi/xray:latest
 COPY --from=builder /build/service/v2raya /usr/bin/
-RUN wget -O /usr/local/share/v2ray/LoyalsoldierSite.dat https://raw.githubusercontent.com/mzz2017/dist-v2ray-rules-dat/master/geosite.dat
 RUN apk add --no-cache iptables ip6tables
+RUN ln -sf /usr/bin/xray /usr/bin/v2ray
+RUN mkdir -p /usr/local/share/xray /root/.local/share/xray && \
+    wget -O /root/.local/share/xray/geosite.dat https://raw.githubusercontent.com/mzz2017/dist-v2ray-rules-dat/master/geosite.dat && \
+    wget -O /root/.local/share/xray/geoip.dat https://raw.githubusercontent.com/mzz2017/dist-v2ray-rules-dat/master/geoip.dat
 EXPOSE 2017
 VOLUME /etc/v2raya
 ENTRYPOINT ["v2raya"]
